@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+SQLAlchemy
+psycopg2-binary
+python-dotenv
+pydantic
+flake8
+black
+isort
+pytest
+httpx

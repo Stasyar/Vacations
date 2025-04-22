@@ -2,24 +2,19 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-dev
     ports:
       - "8000:8000"
 
-    env_file:
-      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@test-db:5432/postgres
 
     depends_on:
-      - db
+      - test-db
 
-  db:
+  test-db:
     image: postgres:13
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
-
-volumes:
-  postgres_data:
