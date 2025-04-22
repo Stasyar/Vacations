@@ -8,12 +8,16 @@
 ```bash
 git clone https://github.com/Stasyar/Vacations.git
 
-docker compose -f docker-compose.yaml up --build
+docker compose -f docker-compose.yaml up -d db
+
+docker compose -f docker-compose.yaml up -d --build app
 ```
 
 ### Тесты
 ```bash
-docker compose -f docker-compose-dev.yaml up --build
+docker compose -f docker-compose-dev.yaml up -d test-db
+
+docker compose -f docker-compose-dev.yaml up -d --build app
 
 docker exec -it <app_container_name> bash
 
