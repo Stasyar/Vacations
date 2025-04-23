@@ -4,26 +4,47 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.app.main import app
-from app.db.database import Base
+from app.db.models import Base
+from app.db.database import get_db
 
 DATABASE_URL = "postgresql://postgres:postgres@test-db:5432/postgres"
 engine = create_engine(DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+# @pytest.fixture(scope="function")
+# def setup_db():
+#     Base.metadata.create_all(bind=engine)
+#     db = TestingSessionLocal()
+#     yield db
+#     db.close()
+#     Base.metadata.drop_all(bind=engine)
+#
+
+
+def override_get_db():
+    db = TestingSessionLocal()
+    print("db was overrode")
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+app.dependency_overrides[get_db] = override_get_db
+
+
 @pytest.fixture(scope="function")
 def setup_db():
-    Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    yield db
-    db.close()
     Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    print("tabled created")
+    yield
 
 
 @pytest.fixture(scope="function")
 def client():
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 def test_create_vacation(client, setup_db):
@@ -77,11 +98,24 @@ def test_last_three_vacations(client, setup_db):
 
 
 def test_get_vacations_by_period(client, setup_db):
+    vacation_data_1 = {
+        "employee_id": 1,
+        "start_date": "2025-01-01",
+        "end_date": "2025-01-10",
+    }
+    vacation_data_2 = {
+        "employee_id": 1,
+        "start_date": "2025-02-01",
+        "end_date": "2025-02-10",
+    }
 
-    response = client.get("/vacations/period?start_date=2025-01-01&end_date=2025-02-28")
+    client.post("/vacations/", json=vacation_data_1)
+    client.post("/vacations/", json=vacation_data_2)
+
+    response = client.get("/vacations/period?start_date=2025-01-01&end_date=2025-01-28")
     assert response.status_code == 200
     vacations = response.json()
-    assert len(vacations) == 2
+    assert len(vacations) == 1
 
 
 def test_delete_vacation(client, setup_db):
